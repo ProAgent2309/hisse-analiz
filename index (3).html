@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hisse Analiz Robotu — Profesyonel Borsa Tarama Platformu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1e293b;--bg4:#334155;
+  --border:#1e293b;--border2:#334155;
+  --text:#94a3b8;--text2:#64748b;--text3:#475569;--white:#f1f5f9;--white2:#e2e8f0;
+  --primary:#3b82f6;--primary2:#2563eb;--primary3:#1d4ed8;
+  --green:#10b981;--green2:#059669;--red:#ef4444;--red2:#dc2626;
+  --amber:#f59e0b;--purple:#8b5cf6;--cyan:#06b6d4;--orange:#f97316;--pink:#ec4899;
+  --gold:linear-gradient(135deg,#f59e0b,#d97706);
+  --radius:8px;--radius2:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+::selection{background:#3b82f633;color:var(--white)}
+a{color:var(--primary);text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px #3b82f622}50%{box-shadow:0 0 40px #3b82f644}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes countUp{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+
+/* ═══ LOGIN PAGE ═══ */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,#1e3a5f22,transparent 60%),radial-gradient(ellipse at 70% 80%,#3b82f611,transparent 60%)}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);background-size:50px 50px}
+.login-box{position:relative;z-index:2;width:100%;max-width:420px;padding:0 20px;animation:fadeUp .6s ease}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px 36px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo .icon{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px;color:#fff;font-weight:800;box-shadow:0 8px 24px #3b82f633}
+.login-logo h1{font-size:20px;font-weight:800;color:var(--white);letter-spacing:-.5px}
+.login-logo p{font-size:12px;color:var(--text2);margin-top:4px;letter-spacing:.5px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;letter-spacing:.3px}
+.form-group input{width:100%;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:14px;outline:none;transition:border .2s}
+.form-group input:focus{border-color:var(--primary)}
+.form-group input::placeholder{color:var(--text3)}
+.login-btn{width:100%;padding:12px;border-radius:var(--radius);border:none;background:var(--primary);color:#fff;font-size:14px;font-weight:700;transition:all .2s;margin-top:8px}
+.login-btn:hover{background:var(--primary2);transform:translateY(-1px);box-shadow:0 4px 16px #3b82f644}
+.login-error{background:#ef444422;border:1px solid #ef444444;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--red);margin-bottom:14px;display:none}
+
+/* ═══ LAYOUT ═══ */
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:40;transition:transform .3s}
+.sidebar-header{padding:20px;border-bottom:1px solid var(--border)}
+.sidebar-brand{display:flex;align-items:center;gap:12px}
+.sidebar-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff}
+.sidebar-title{font-size:14px;font-weight:800;color:var(--white);letter-spacing:-.3px}
+.sidebar-sub{font-size:10px;color:var(--text2);margin-top:1px;letter-spacing:.5px}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto}
+.nav-section{margin-bottom:16px}
+.nav-section-title{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;padding:4px 12px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);border:none;width:100%;text-align:left;background:transparent;color:var(--text);font-size:13px;font-weight:500;transition:all .15s;cursor:pointer;position:relative}
+.nav-item:hover{background:var(--bg3);color:var(--white2)}
+.nav-item.active{background:#3b82f615;color:var(--primary);font-weight:600}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--primary);border-radius:0 3px 3px 0}
+.nav-item .ico{width:20px;text-align:center;font-size:14px;opacity:.7}
+.nav-item .badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--bg3);color:var(--text2)}
+.nav-item.active .badge{background:#3b82f622;color:var(--primary)}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:11px}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:32px;height:32px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text)}
+.user-name{font-weight:600;color:var(--white2);font-size:12px}
+.user-role{font-size:10px;color:var(--text2)}
+.user-days{font-size:10px;margin-top:6px;padding:4px 8px;border-radius:4px;display:inline-block}
+.logout-btn{margin-top:8px;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;width:100%;transition:all .15s}
+.logout-btn:hover{border-color:var(--red);color:var(--red);background:#ef444411}
+
+.main{flex:1;margin-left:260px;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:30;background:var(--bg)ee;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.topbar h2{font-size:18px;font-weight:700;color:var(--white);letter-spacing:-.3px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-time{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+.content{padding:24px 28px 60px}
+
+/* ═══ CARDS ═══ */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:20px;position:relative;overflow:hidden;transition:all .2s}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.stat-card .line{position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card .num{font-size:32px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:4px;animation:countUp .5s ease}
+.stat-card .lbl{font-size:11px;color:var(--text2);font-weight:500}
+
+/* ═══ TABLES ═══ */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;margin-bottom:20px}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:14px;font-weight:700;color:var(--white)}
+.panel-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text)}
+.tbl-wrap{overflow-x:auto;max-height:calc(100vh - 300px);overflow-y:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th{padding:10px 12px;text-align:center;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text2);text-transform:uppercase;background:var(--bg);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--white)}
+th:first-child{text-align:left;padding-left:20px}
+td{padding:8px 12px;border-bottom:1px solid #111827;text-align:center;font-size:13px}
+td:first-child{text-align:left;padding-left:20px;font-weight:600;color:var(--white);letter-spacing:.5px;font-family:'JetBrains Mono',monospace;font-size:12px}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:var(--bg3)!important}
+tbody tr:nth-child(odd){background:#0f172a}
+.pct-pos{color:var(--green);font-weight:600;font-size:12px}
+.pct-neg{color:var(--red);font-weight:600;font-size:12px}
+.pct-zero{color:var(--text3);font-size:12px}
+.chip{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.chip-on{border:1px solid;background:currentColor;-webkit-background-clip:unset}
+.chip-off{background:var(--bg);color:var(--text3);border:1px solid var(--border)}
+.signal{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700}
+
+/* ═══ SEARCH BAR ═══ */
+.search-row{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:9px 14px 9px 36px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;outline:none;transition:border .2s;position:relative}
+.search-input:focus{border-color:var(--primary)}
+.filter-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:600;transition:all .15s}
+.filter-chip:hover{border-color:var(--border2);color:var(--white2)}
+.filter-chip.active{border-color:var(--primary);background:#3b82f615;color:var(--primary)}
+
+/* ═══ FILTER PANEL ═══ */
+.filter-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;margin-bottom:20px}
+.filter-status{padding:10px 16px;border-radius:var(--radius);margin-bottom:18px;font-size:12px;font-weight:600}
+.filter-table{width:100%;border-collapse:collapse}
+.filter-table th{padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:1.5px;border-bottom:2px solid var(--border);text-align:left}
+.filter-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
+.filter-table tr:hover{background:var(--bg3)}
+.toggle-btn{padding:7px 20px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:.5px;transition:all .15s;cursor:pointer;font-family:inherit}
+.toggle-on{border:2px solid var(--green2);background:#05966915;color:var(--green)}
+.toggle-off{border:2px solid var(--red2)44;background:#dc262611;color:var(--red)}
+.toggle-btn:hover{transform:scale(1.03)}
+.action-row{display:flex;gap:8px;margin-top:16px}
+.action-btn{flex:1;padding:11px;border-radius:var(--radius);font-size:12px;font-weight:700;letter-spacing:.5px;transition:all .15s;border:none}
+.action-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+
+/* ═══ ADMIN PANEL ═══ */
+.admin-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;margin-bottom:20px}
+.admin-card h3{font-size:15px;font-weight:700;color:var(--white);margin-bottom:16px}
+.admin-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.admin-form label{font-size:11px;font-weight:600;color:var(--text);display:block;margin-bottom:4px}
+.admin-form input{padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;outline:none;width:100%}
+.admin-form input:focus{border-color:var(--primary)}
+.admin-btn{padding:9px 20px;border-radius:var(--radius);border:none;background:var(--primary);color:#fff;font-size:12px;font-weight:700;white-space:nowrap}
+.admin-btn:hover{background:var(--primary2)}
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text2);border-bottom:2px solid var(--border)}
+.user-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.user-table tr:hover{background:var(--bg3)}
+.days-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block}
+.days-ok{background:#05966922;color:var(--green)}
+.days-warn{background:#f59e0b22;color:var(--amber)}
+.days-expired{background:#ef444422;color:var(--red)}
+.del-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--red)44;background:transparent;color:var(--red);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.del-btn:hover{background:#ef444422}
+.extend-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--green)44;background:transparent;color:var(--green);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;margin-right:6px}
+.extend-btn:hover{background:#10b98122}
+
+/* ═══ HIGHLIGHT BOX ═══ */
+.highlight-box{border-radius:var(--radius2);padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.highlight-badge{padding:7px 18px;border-radius:var(--radius);font-size:13px;font-weight:700;letter-spacing:.5px}
+
+/* ═══ MOBILE ═══ */
+.mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:50;width:40px;height:40px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--white);font-size:18px;align-items:center;justify-content:center}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .mobile-toggle{display:flex}
+  .topbar{padding-left:56px}
+  .content{padding:16px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .admin-form{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  HİSSE ANALİZ ROBOTU — Professional Trading Platform
+//  Data Engine + Auth + Admin + Multi-condition Screening
+// ═══════════════════════════════════════════════════════════════
+
+// ─── DEFAULT USERS ───
+const DEFAULT_USERS=[
+  {id:1,username:"admin",password:"admin123",role:"admin",name:"Yönetici",expiry:"2026-12-31"},
+  {id:2,username:"demo",password:"demo123",role:"user",name:"Demo Kullanıcı",expiry:"2026-03-15"},
+];
+
+// ─── SCREENING DATA (from 3 Excel files) ───
+const DUK=new Set(["ADEL","AKENR","AKFIS","ALBTSF1","ARCLK","ASGYO","ATAGY","ATAKP","AYEN","BALAT","BJKAS","BOBET","BORLS","BORSK","BUCIM","CMENT","CONSE","DAPGM","EUKYO","FORTE","ICUGS","KATMR","POLTK","SEGYO","YYAPI","ACSEL","ADESE","ADGYO","AEFES","AFYON","AGESA","AGHOL","AHGAZ","AKBNK","AKCNS","AKGRT","AKSA","AKSEN","AKSUE","ALGYO","ALKA","ALKIM","ARENA","ASTOR","ASUZU","ATATP","ATSYH","AVHOL","AYGAZ","BAGFS","BANVT","BERA","BFREN","BIMAS","BIOEN","BRISA","BRSAN","BRYAT","CATES","CCOLA","DESA","DOAS","ENJSA","ENKAI","EREGL","FENER","FROTO","GARAN","GSRAY","GUBRF","INDES","KCHOL","KNFRT","LOGO","MGROS","MRSHL","OTKAR","PGSUS","SAHOL","TBORG","TCELL","THYAO","TOASO","TTKOM","TUPRS"]);
+const CROSS=new Set(["AKENR","ALFAS","ATEKS","CELHA","DGNMO","ICUGS","KMPUR","SEGYO"]);
+const IKILI=new Set(["AKENR","AKSUE","ALVES","ANELE","ANGEN","ARFYE","ATAGY","ATEKS","BALSU","BINBN","BINHO","BRMEN","CASA","CEOEM","DAPGM","DMSAS","DOFER","DURDO","EGEEN","EUKYO","FORTE","GEDZA","GOKNR","GZNMI","ICBCT","IZENR","KATMR","KBORU","KRSTL","KUYAS","LIDER","LINK","MARKA","MNDRS","MOGAN","MRGYO","NATEN","NUGYO","ODAS","ORCAY","OYLUM","OZGYO","PEKGY","POLTK","REEDR","RGYAS","RODRG","RTALB","SANEL","SNGYO","SUNTK","TABGD","TDGYO","TERA","TETMT","TLMAN","TMPOL","TNZTP","TSGYO","TUKAS","TUREX","VKFYO","VKGYO","YAPRK","YGGYO","YYLGD","YYAPI","ZRGYO"]);
+
+const PR={ACSEL:[112.4,.63,0],ADEL:[38.4,9.46,1.8],ADESE:[1.2,1.69,0],ADGYO:[62.75,.97,.32],AEFES:[21.9,8.52,1.77],AFYON:[14.89,3.12,-.33],AGESA:[248.6,2.18,-.52],AGHOL:[35.96,3.04,.17],AHGAZ:[16.07,2.82,.19],AKBNK:[66.25,-.3,-.08],AKCNS:[78.6,5.8,.9],AKENR:[11.3,2.08,-.18],AKFIS:[22.82,3.57,.75],AKGRT:[9.66,1.15,.1],AKSA:[42.9,0,.33],AKSEN:[9.1,1,.22],AKSUE:[8.5,-.81,.47],ALBTSF1:[47.96,5.83,2.14],ALFAS:[43.7,6.27,3.07],ALGYO:[5.9,3.87,2.43],ALKA:[35.24,3.76,.74],ALKIM:[19.6,6.52,1.55],ALVES:[3.62,5.85,.83],ANELE:[9.56,3.24,.31],ANGEN:[14.63,5.33,2.02],ARCLK:[198.8,6.21,1.69],ARDYZ:[6.68,5.86,3.41],ARENA:[28.2,4.63,2.17],ARFYE:[6.48,1.09,.47],ASGYO:[9.65,4.11,1.47],ASTOR:[70,3.85,2.34],ASUZU:[62.7,4.15,1.62],ATAGY:[9.29,5.8,.87],ATAKP:[81.9,2.76,.49],ATATP:[19.53,5.4,.98],ATEKS:[108.9,7.82,10],ATSYH:[16,5.61,.82],AVHOL:[45.68,1.46,.53],AYEN:[16.23,5.49,2.14],AYGAZ:[110.1,5.97,1.76],BAGFS:[98.2,5.38,-.1],BALAT:[6.4,3.06,.79],BALSU:[3.02,-1.31,.33],BANVT:[100.8,3.7,1.31],BERA:[77.55,3.33,1.83],BFREN:[192.7,2.23,.68],BIMAS:[622.5,8.66,.77],BINBN:[3.59,0,-.28],BINHO:[5.3,0,0],BIOEN:[28.38,9.4,1.43],BJKAS:[6.47,5.54,3.68],BOBET:[60.1,3.44,.17],BORLS:[42.72,6.46,1.33],BORSK:[6.97,11.33,3.11],BRISA:[171.8,9.11,1.84],BRMEN:[7.86,2.47,.13],BRSAN:[70.2,2.63,.57],BRYAT:[45.42,5.78,1.57],BUCIM:[35.78,3.89,.51],CASA:[4.61,2.44,.87],CATES:[42.78,7.13,.99],CCOLA:[125,2.3,.48],CELHA:[11.1,8.82,3.54],CEOEM:[3.75,6.25,1.35],CMENT:[20.68,6.38,1.87],CONSE:[47.96,3.88,0],DAPGM:[12.09,6.15,.92],DESA:[66.4,4.73,2.31],DGNMO:[5.24,5.01,.77],DMSAS:[17.34,3.34,.52],DOAS:[240.3,9.36,.8],DOFER:[5.3,1.53,.38],DURDO:[4.11,0,-.24],EGEEN:[93.9,2.28,-.53],ENJSA:[33.48,8.26,2.32],ENKAI:[58.35,3.91,.09],EREGL:[46.52,4.72,.13],EUKYO:[3.39,4.31,.59],FENER:[120.2,3.27,.75],FORTE:[5.81,6.42,1.39],FROTO:[1116,3.72,1.09],GARAN:[133.6,-.07,.07],GEDZA:[10.28,7.73,2.08],GOKNR:[4.26,3.9,1.67],GSRAY:[14.65,5.03,1.6],GUBRF:[99.5,1.84,.3],GZNMI:[8.47,8.17,3.29],ICBCT:[9.26,6.05,1.98],ICUGS:[2.97,13.36,8.39],INDES:[50.6,3.48,1.2],IZENR:[3.06,2.34,.33],KATMR:[18.2,4.11,0],KBORU:[14.8,3.64,.82],KCHOL:[169.3,2.86,.47],KMPUR:[16.22,5.81,1.69],KNFRT:[179,5.93,2.29],KRSTL:[3.08,6.57,.65],KUYAS:[3.12,.97,.64],LIDER:[3.28,3.14,.61],LINK:[7.85,3.71,1.42],LOGO:[81.6,3.81,1.24],MARKA:[5.27,4.56,.38],MGROS:[377.25,3.53,.13],MNDRS:[7.95,5.97,1.28],MOGAN:[6.13,5.33,1.83],MRGYO:[2.89,3.58,0],MRSHL:[55.7,4.5,1.09],NATEN:[19.55,3.04,.26],NUGYO:[5.99,5.46,1.01],ODAS:[12.02,2.56,.75],ORCAY:[4.22,5,.95],OTKAR:[451.25,6.87,.5],OYLUM:[5.66,3.29,0],OZGYO:[4.11,5.39,.73],PEKGY:[9.88,2.07,.71],PGSUS:[777,3.06,.13],POLTK:[9.27,3,.54],REEDR:[4.77,5.07,.63],RGYAS:[3.08,2.67,.99],RODRG:[2.36,1.72,0],RTALB:[7.37,3.08,1.1],SAHOL:[71.55,3.32,.56],SANEL:[12.05,6.73,1.26],SEGYO:[6.12,26.71,9.87],SNGYO:[4.72,3.51,.85],SUNTK:[6.32,6.04,1.61],TABGD:[5.14,0,-.39],TBORG:[185.3,5.62,1.98],TCELL:[57.95,2.84,.09],TDGYO:[5,3.1,.81],TERA:[4.15,1.22,0],TETMT:[7.28,3.26,.83],THYAO:[283,3.28,.53],TLMAN:[12.06,2.89,0],TMPOL:[9,2.39,.56],TNZTP:[4.52,4.15,.22],TOASO:[145.2,6.29,1.19],TSGYO:[5.35,3.28,.94],TTKOM:[29.2,3.19,.34],TUPRS:[115.3,4.34,.35],TUKAS:[3.33,2.15,.91],TUREX:[3.1,2.31,.65],VKFYO:[5.65,3.48,.53],VKGYO:[3.29,6.13,1.86],YAPRK:[9.42,3.17,0],YYAPI:[4.4,7.06,2.33],YGGYO:[6.24,2.46,.81],YYLGD:[4.71,3.74,.43],ZRGYO:[3.93,4.53,0]};
+
+// Build master data
+const ALL=Object.entries(PR).map(([s,[p,w,d]])=>{
+  const dk=DUK.has(s),cr=CROSS.has(s),ik=IKILI.has(s);
+  return{s,p,w,d,dk,cr,ik,t:(dk?1:0)+(cr?1:0)+(ik?1:0)};
+}).sort((a,b)=>b.t-a.t||a.s.localeCompare(b.s));
+
+const ST={all:ALL.length,dk:ALL.filter(x=>x.dk).length,cr:ALL.filter(x=>x.cr).length,ik:ALL.filter(x=>x.ik).length,str:ALL.filter(x=>x.t>=2).length};
+
+// ─── SCREENING CATEGORIES (professional names) ───
+const CATEGORIES=[
+  {id:"trend",name:"Trend Kırılım Analizi",desc:"Düşen ve yükselen trend çizgisi kırılımlarını tespit eden taramalar",icon:"📉",color:"var(--red)",key:"dk",count:ST.dk},
+  {id:"ema",name:"Hareketli Ortalama Kesişimleri",desc:"EMA ve SMA kesişim sinyallerini tarayan algoritmalar",icon:"📊",color:"var(--cyan)",key:"cr",count:ST.cr},
+  {id:"form",name:"Formasyon Taraması",desc:"İkili dip, omuz-baş-omuz ve diğer teknik formasyonlar",icon:"📐",color:"var(--orange)",key:"ik",count:ST.ik},
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let S={
+  loggedIn:false, user:null,
+  users:JSON.parse(localStorage.getItem("har_users"))||[...DEFAULT_USERS],
+  pg:"dashboard", ck:{dk:false,cr:false,ik:false},
+  q:"", sk:"t", sd:-1, sideOpen:false, loginErr:""
+};
+
+function save(){localStorage.setItem("har_users",JSON.stringify(S.users));}
+function go(p){S.pg=p;S.q="";S.sk="t";S.sd=-1;S.sideOpen=false;render();}
+function tog(k){S.ck[k]=!S.ck[k];render();}
+function clrF(){S.ck={dk:false,cr:false,ik:false};S.q="";render();}
+function selAllF(){S.ck={dk:true,cr:true,ik:true};render();}
+function setQ(v){S.q=v;render();}
+function doSort(k){if(S.sk===k)S.sd*=-1;else{S.sk=k;S.sd=-1;}render();}
+function toggleSide(){S.sideOpen=!S.sideOpen;render();}
+
+function login(){
+  const u=document.getElementById("login-user").value.trim();
+  const p=document.getElementById("login-pass").value.trim();
+  const found=S.users.find(x=>x.username===u&&x.password===p);
+  if(found){
+    const days=Math.ceil((new Date(found.expiry)-new Date())/(1000*60*60*24));
+    if(days<=0&&found.role!=="admin"){S.loginErr="Aboneliğiniz sona ermiş. Yönetici ile iletişime geçin.";render();return;}
+    S.loggedIn=true;S.user=found;S.pg="dashboard";S.loginErr="";render();
+  } else {S.loginErr="Kullanıcı adı veya şifre hatalı!";render();}
+}
+function logout(){S.loggedIn=false;S.user=null;S.pg="dashboard";S.loginErr="";render();}
+function addUser(){
+  const n=document.getElementById("au-name").value.trim();
+  const u=document.getElementById("au-user").value.trim();
+  const p=document.getElementById("au-pass").value.trim();
+  const d=document.getElementById("au-days").value.trim()||"30";
+  if(!n||!u||!p){alert("Tüm alanları doldurun!");return;}
+  if(S.users.find(x=>x.username===u)){alert("Bu kullanıcı adı zaten mevcut!");return;}
+  const exp=new Date();exp.setDate(exp.getDate()+parseInt(d));
+  S.users.push({id:Date.now(),username:u,password:p,role:"user",name:n,expiry:exp.toISOString().split("T")[0]});
+  save();render();
+}
+function delUser(id){if(confirm("Bu üyeyi silmek istediğinize emin misiniz?")){S.users=S.users.filter(x=>x.id!==id);save();render();}}
+function extendUser(id,days){
+  const u=S.users.find(x=>x.id===id);if(!u)return;
+  const base=new Date(u.expiry)>new Date()?new Date(u.expiry):new Date();
+  base.setDate(base.getDate()+days);
+  u.expiry=base.toISOString().split("T")[0];save();render();
+}
+
+function getDays(exp){return Math.ceil((new Date(exp)-new Date())/(1000*60*60*24));}
+function getData(){
+  let d=[...ALL];const{pg,ck,q,sk,sd}=S;
+  if(pg==="trend")d=d.filter(x=>x.dk);
+  if(pg==="ema")d=d.filter(x=>x.cr);
+  if(pg==="form")d=d.filter(x=>x.ik);
+  if(pg==="strong")d=d.filter(x=>x.t>=2);
+  if(pg==="filter"||pg==="master"){if(ck.dk)d=d.filter(x=>x.dk);if(ck.cr)d=d.filter(x=>x.cr);if(ck.ik)d=d.filter(x=>x.ik);}
+  if(q)d=d.filter(x=>x.s.toLowerCase().includes(q.toLowerCase()));
+  d.sort((a,b)=>{let av=a[sk],bv=b[sk];if(typeof av==="boolean"){av=av?1:0;bv=bv?1:0;}if(typeof av==="string")return av.localeCompare(bv)*sd;return((av>bv?1:av<bv?-1:0))*sd;});
+  return d;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════════════════════════
+function pct(v){if(v==null)return'<span class="pct-zero">—</span>';return`<span class="pct-${v>0?"pos":v<0?"neg":"zero"}">${v>0?"+":""}${v.toFixed(2)}%</span>`;}
+function chip(on,c,l){return on?`<span class="chip" style="background:${c}18;color:${c};border:1px solid ${c}33">✓ ${l}</span>`:`<span class="chip chip-off">— ${l}</span>`;}
+function sig(n){const m={3:["var(--green)","Güçlü","⚡⚡⚡"],2:["var(--amber)","Çift","⚡⚡"],1:["var(--text3)","Tek","⚡"],0:["var(--bg3)","—",""]};const[c,l,i]=m[n]||m[0];return`<span class="signal" style="background:${c}15;color:${c};border:1px solid ${c}22">${i} ${l}</span>`;}
+function sI(k){return S.sk===k?(S.sd===1?"↑":"↓"):"⇅";}
+function now(){return new Date().toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+
+function renderTable(data,full){
+  let ths=`<th onclick="doSort('s')">Sembol ${sI('s')}</th><th onclick="doSort('p')">Fiyat ${sI('p')}</th><th onclick="doSort('w')">7 Gün ${sI('w')}</th><th onclick="doSort('d')">Günlük ${sI('d')}</th>`;
+  if(full)ths+=`<th onclick="doSort('dk')">Trend Kır. ${sI('dk')}</th><th onclick="doSort('cr')">EMA Kes. ${sI('cr')}</th><th onclick="doSort('ik')">Formasyon ${sI('ik')}</th>`;
+  ths+=`<th onclick="doSort('t')">Sinyal ${sI('t')}</th>`;
+  let rows=data.length===0?`<tr><td colspan="${full?8:5}" style="padding:40px;text-align:center;color:var(--text3)">Sonuç bulunamadı</td></tr>`:"";
+  data.forEach(x=>{rows+=`<tr><td>${x.s}</td><td style="text-align:right;color:var(--white2)">₺${x.p.toFixed(2)}</td><td>${pct(x.w)}</td><td>${pct(x.d)}</td>${full?`<td>${chip(x.dk,"var(--red)","Kırılım")}</td><td>${chip(x.cr,"var(--cyan)","Kesişim")}</td><td>${chip(x.ik,"var(--orange)","Formas.")}</td>`:""}<td>${sig(x.t)}</td></tr>`;});
+  return`<div class="panel"><div class="panel-header"><span class="panel-title">Tarama Sonuçları</span><span class="panel-badge">${data.length} hisse</span></div><div class="tbl-wrap"><table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+function searchHTML(){
+  return`<div class="search-row"><input class="search-input" value="${S.q}" oninput="setQ(this.value)" placeholder="Sembol arayın..."/>${S.q?`<button class="filter-chip" onclick="setQ('')">✕ Temizle</button>`:""}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAIN RENDER
+// ═══════════════════════════════════════════════════════════════
+function render(){
+  const R=document.getElementById("root");
+  if(!S.loggedIn){R.innerHTML=renderLogin();return;}
+  const data=getData();
+  const activeN=[S.ck.dk,S.ck.cr,S.ck.ik].filter(Boolean).length;
+  const days=getDays(S.user.expiry);
+  const isAdmin=S.user.role==="admin";
+  let h="";
+
+  // Mobile toggle
+  h+=`<button class="mobile-toggle" onclick="toggleSide()">☰</button>`;
+
+  // Sidebar
+  h+=`<div class="sidebar ${S.sideOpen?"open":""}">`;
+  h+=`<div class="sidebar-header"><div class="sidebar-brand"><div class="sidebar-icon">H</div><div><div class="sidebar-title">Hisse Analiz Robotu</div><div class="sidebar-sub">Profesyonel Tarama</div></div></div></div>`;
+  
+  h+=`<div class="sidebar-nav">`;
+  h+=`<div class="nav-section"><div class="nav-section-title">Genel</div>`;
+  h+=navItem("dashboard","◈","Kontrol Paneli");
+  h+=navItem("filter","⬡","Akıllı Filtre");
+  h+=navItem("master","◉","Tüm Taramalar",""+ST.all);
+  h+=navItem("strong","⚡","Güçlü Adaylar",""+ST.str);
+  h+=`</div>`;
+  
+  h+=`<div class="nav-section"><div class="nav-section-title">Tarama Kategorileri</div>`;
+  h+=navItem("trend","📉","Trend Kırılım Analizi",""+ST.dk);
+  h+=navItem("ema","📊","Ort. Kesişim Taraması",""+ST.cr);
+  h+=navItem("form","📐","Formasyon Taraması",""+ST.ik);
+  h+=`</div>`;
+
+  if(isAdmin){
+    h+=`<div class="nav-section"><div class="nav-section-title">Yönetim</div>`;
+    h+=navItem("admin","⚙","Üye Yönetimi",""+S.users.filter(x=>x.role!=="admin").length);
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+
+  // Sidebar footer
+  h+=`<div class="sidebar-footer"><div class="user-info"><div class="user-avatar">${S.user.name[0]}</div><div><div class="user-name">${S.user.name}</div><div class="user-role">${isAdmin?"Yönetici":"Üye"}</div></div></div>`;
+  if(!isAdmin){
+    const dc=days>14?"days-ok":days>3?"days-warn":"days-expired";
+    h+=`<div class="user-days ${dc}" style="margin-top:8px">${days>0?days+" gün kaldı":"Süre doldu!"}</div>`;
+  }
+  h+=`<button class="logout-btn" onclick="logout()">Çıkış Yap</button></div>`;
+  h+=`</div>`;
+
+  // Main
+  h+=`<div class="main">`;
+  h+=`<div class="topbar"><h2>${getPageTitle()}</h2><div class="topbar-right"><span class="topbar-time">${now()}</span></div></div>`;
+  h+=`<div class="content" style="animation:fadeUp .4s ease">`;
+
+  // ── DASHBOARD ──
+  if(S.pg==="dashboard"){
+    h+=`<div class="stats-grid">`;
+    h+=statCard(ST.all,"Toplam Tarama","var(--primary)");
+    h+=statCard(ST.dk,"Trend Kırılımı","var(--red)");
+    h+=statCard(ST.cr,"Ortalama Kesişimi","var(--cyan)");
+    h+=statCard(ST.ik,"Formasyon Sinyali","var(--orange)");
+    h+=statCard(ST.str,"Güçlü Aday","var(--green)");
+    h+=`</div>`;
+
+    const triple=ALL.filter(x=>x.t>=3);
+    if(triple.length>0){
+      h+=`<div class="highlight-box" style="background:#10b98112;border:1px solid #10b98133"><div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--green)">⚡ Tüm Şartları Sağlayan Hisseler</div><div style="font-size:12px;color:var(--text2);margin-top:3px">3 farklı tarama koşulunu aynı anda karşılayan en güçlü adaylar</div></div><div style="display:flex;gap:8px;flex-wrap:wrap">${triple.map(x=>`<span class="highlight-badge" style="background:var(--green);color:#fff">${x.s}</span>`).join("")}</div></div>`;
+    }
+
+    h+=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:24px">`;
+    CATEGORIES.forEach(c=>{
+      h+=`<div class="panel" style="cursor:pointer" onclick="go('${c.id}')"><div style="padding:20px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span style="font-size:24px">${c.icon}</span><div><div style="font-size:14px;font-weight:700;color:var(--white)">${c.name}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${c.desc}</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border)"><span style="font-size:24px;font-weight:800;color:${c.color};font-family:'JetBrains Mono',monospace">${c.count}</span><span style="font-size:11px;color:var(--text2)">hisse tespit edildi →</span></div></div></div>`;
+    });
+    h+=`</div>`;
+
+    // Top movers
+    const topW7=[...ALL].sort((a,b)=>b.w-a.w).slice(0,8);
+    h+=`<div class="panel"><div class="panel-header"><span class="panel-title">📈 Haftalık En Çok Yükselenler</span></div><div class="tbl-wrap"><table><thead><tr><th>Sembol</th><th>Fiyat</th><th>7 Gün</th><th>Günlük</th><th>Sinyal</th></tr></thead><tbody>`;
+    topW7.forEach(x=>{h+=`<tr><td>${x.s}</td><td style="text-align:right;color:var(--white2)">₺${x.p.toFixed(2)}</td><td>${pct(x.w)}</td><td>${pct(x.d)}</td><td>${sig(x.t)}</td></tr>`;});
+    h+=`</tbody></table></div></div>`;
+  }
+
+  // ── FILTER ──
+  if(S.pg==="filter"){
+    h+=`<div class="filter-box">`;
+    h+=`<div class="filter-status" style="background:${activeN>0?"#10b98112;border:1px solid #10b98133;color:var(--green)":"#f59e0b12;border:1px solid #f59e0b33;color:var(--amber)"}">${activeN>0?activeN+" koşul seçildi — "+data.length+" hisse filtrelendi":"Filtreleme yapılmadı — koşullardan istediklerinizi aktif edin"}</div>`;
+    h+=`<table class="filter-table"><thead><tr><th style="width:50px;text-align:center">#</th><th style="width:120px;text-align:center">Durum</th><th>Tarama Koşulu</th><th style="width:80px;text-align:center">Sonuç</th></tr></thead><tbody>`;
+    CATEGORIES.forEach((c,i)=>{
+      const on=S.ck[c.key];
+      h+=`<tr><td style="text-align:center;font-weight:700;color:var(--text3)">${i+1}</td><td style="text-align:center"><button class="toggle-btn ${on?"toggle-on":"toggle-off"}" onclick="tog('${c.key}')">${on?"✓ AKTİF":"✕ PASİF"}</button></td><td><div style="font-weight:600;color:var(--white);margin-bottom:2px">${c.icon} ${c.name}</div><div style="font-size:12px;color:var(--text2)">${c.desc}</div></td><td style="text-align:center;font-size:18px;font-weight:800;color:${c.color}">${c.count}</td></tr>`;
+    });
+    h+=`</tbody></table>`;
+    h+=`<div class="action-row"><button class="action-btn" style="background:var(--green);color:#fff" onclick="void(0)">▶ SONUÇLAR (${data.length})</button><button class="action-btn" style="background:var(--red2);color:#fff" onclick="clrF()">✕ TEMİZLE</button><button class="action-btn" style="background:var(--primary);color:#fff" onclick="selAllF()">☑ TÜMÜNÜ SEÇ</button></div>`;
+    h+=`</div>`;
+    h+=searchHTML()+renderTable(data,true);
+  }
+
+  // ── DATA PAGES ──
+  if(["master","strong","trend","ema","form"].includes(S.pg)){
+    const full=S.pg==="master"||S.pg==="strong";
+    if(S.pg==="master"){
+      h+=`<div class="search-row"><input class="search-input" value="${S.q}" oninput="setQ(this.value)" placeholder="Sembol arayın..."/>`;
+      ["dk","cr","ik"].forEach(k=>{
+        const labels={dk:"Trend Kırılım",cr:"Ort. Kesişim",ik:"Formasyon"};
+        h+=`<button class="filter-chip ${S.ck[k]?"active":""}" onclick="tog('${k}')">${S.ck[k]?"✓ ":""}${labels[k]}</button>`;
+      });
+      h+=`${S.q?`<button class="filter-chip" onclick="setQ('')">✕</button>`:""}</div>`;
+    } else {
+      h+=searchHTML();
+    }
+    h+=renderTable(data,full);
+  }
+
+  // ── ADMIN ──
+  if(S.pg==="admin"&&isAdmin){
+    h+=`<div class="admin-card"><h3>➕ Yeni Üye Ekle</h3><div class="admin-form"><div><label>Ad Soyad</label><input id="au-name" placeholder="Ahmet Yılmaz"/></div><div><label>Kullanıcı Adı</label><input id="au-user" placeholder="ahmet"/></div><div><label>Şifre</label><input id="au-pass" placeholder="şifre123"/></div><div style="display:flex;gap:8px;align-items:end"><div><label>Gün</label><input id="au-days" placeholder="30" style="width:70px" value="30"/></div><button class="admin-btn" onclick="addUser()">Ekle</button></div></div></div>`;
+
+    const members=S.users.filter(x=>x.role!=="admin");
+    h+=`<div class="admin-card"><h3>👥 Üye Listesi (${members.length})</h3>`;
+    h+=`<table class="user-table"><thead><tr><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Şifre</th><th>Bitiş Tarihi</th><th>Kalan Gün</th><th>İşlem</th></tr></thead><tbody>`;
+    if(members.length===0){h+=`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3)">Henüz üye eklenmemiş</td></tr>`;}
+    members.forEach(u=>{
+      const d=getDays(u.expiry);
+      const dc=d>14?"days-ok":d>3?"days-warn":"days-expired";
+      h+=`<tr><td style="font-weight:600;color:var(--white)">${u.name}</td><td><code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:12px">${u.username}</code></td><td><code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:12px">${u.password}</code></td><td>${u.expiry}</td><td><span class="days-badge ${dc}">${d>0?d+" gün":"SÜRESİ DOLDU"}</span></td><td><button class="extend-btn" onclick="extendUser(${u.id},30)">+30 Gün</button><button class="del-btn" onclick="delUser(${u.id})">Sil</button></td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+
+    // Stats
+    const activeUsers=members.filter(u=>getDays(u.expiry)>0).length;
+    const expiredUsers=members.filter(u=>getDays(u.expiry)<=0).length;
+    h+=`<div class="stats-grid"><div class="stat-card"><div class="line" style="background:var(--primary)"></div><div class="num" style="color:var(--primary)">${members.length}</div><div class="lbl">Toplam Üye</div></div><div class="stat-card"><div class="line" style="background:var(--green)"></div><div class="num" style="color:var(--green)">${activeUsers}</div><div class="lbl">Aktif Üye</div></div><div class="stat-card"><div class="line" style="background:var(--red)"></div><div class="num" style="color:var(--red)">${expiredUsers}</div><div class="lbl">Süresi Dolan</div></div></div>`;
+  }
+
+  h+=`</div></div>`;
+  R.innerHTML=h;
+}
+
+function navItem(pg,ico,label,badge){
+  return`<button class="nav-item ${S.pg===pg?"active":""}" onclick="go('${pg}')"><span class="ico">${ico}</span><span>${label}</span>${badge?`<span class="badge">${badge}</span>`:""}</button>`;
+}
+function statCard(n,l,c){
+  return`<div class="stat-card"><div class="line" style="background:${c}"></div><div class="num" style="color:${c}">${n}</div><div class="lbl">${l}</div></div>`;
+}
+function getPageTitle(){
+  const m={dashboard:"Kontrol Paneli",filter:"Akıllı Filtre",master:"Tüm Taramalar",strong:"Güçlü Adaylar",trend:"Trend Kırılım Analizi",ema:"Hareketli Ortalama Kesişimleri",form:"Formasyon Taraması",admin:"Üye Yönetimi"};
+  return m[S.pg]||"";
+}
+
+function renderLogin(){
+  return`<div class="login-page"><div class="login-bg"></div><div class="login-grid"></div><div class="login-box"><div class="login-card"><div class="login-logo"><div class="icon">H</div><h1>Hisse Analiz Robotu</h1><p>Profesyonel Borsa Tarama Platformu</p></div>${S.loginErr?`<div class="login-error" style="display:block">${S.loginErr}</div>`:""}<div class="form-group"><label>Kullanıcı Adı</label><input id="login-user" placeholder="kullanıcı adınız" onkeydown="if(event.key==='Enter')login()"/></div><div class="form-group"><label>Şifre</label><input id="login-pass" type="password" placeholder="şifreniz" onkeydown="if(event.key==='Enter')login()"/></div><button class="login-btn" onclick="login()">Giriş Yap</button><div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text3)">Demo: admin / admin123</div></div></div></div>`;
+}
+
+// Init
+render();
+</script>
+</body>
+</html>
